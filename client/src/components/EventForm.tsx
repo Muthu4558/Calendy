@@ -6,36 +6,42 @@ import { Label } from "@/components/ui/label";
 import { useEvents } from "@/contexts/EventContext";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 
 const EventForm = () => {
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState("");
+  const [timeValue, setTimeValue] = useState("");
+  const [amPm, setAmPm] = useState("AM");
   const { addEvent } = useEvents();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !location || !date || !time) {
+    if (!title || !location || !date || !timeValue) {
       return;
     }
+    
+    // Format time with AM/PM
+    const formattedTime = `${timeValue} ${amPm}`;
     
     addEvent({
       title,
       location,
       date,
-      time
+      time: formattedTime
     });
     
     // Reset form
     setTitle("");
     setLocation("");
     setDate(undefined);
-    setTime("");
+    setTimeValue("");
+    setAmPm("AM");
   };
 
   return (
@@ -92,13 +98,27 @@ const EventForm = () => {
       
       <div className="space-y-2">
         <Label htmlFor="time">Time</Label>
-        <Input
-          id="time"
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          required
-        />
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Input
+              id="time"
+              type="time"
+              value={timeValue}
+              onChange={(e) => setTimeValue(e.target.value)}
+              required
+            />
+          </div>
+          <Select value={amPm} onValueChange={setAmPm}>
+            <SelectTrigger className="w-24">
+              <Clock className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="AM/PM" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="AM">AM</SelectItem>
+              <SelectItem value="PM">PM</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       <Button type="submit" className="w-full bg-event hover:bg-event-hover">

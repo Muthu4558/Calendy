@@ -32,10 +32,62 @@ const CalendarView = () => {
     try {
       toast("Preparing download...");
       
-      const dataUrl = await htmlToImage.toPng(calendarRef.current, {
-        quality: 1.0,
-        backgroundColor: '#fff'
+      // Create a temporary wrapper div to include month and year header
+      const tempContainer = document.createElement('div');
+      tempContainer.style.padding = '20px';
+      tempContainer.style.backgroundColor = '#ffffff';
+      
+      // Create a header for the month and year
+      const header = document.createElement('h1');
+      header.textContent = format(currentMonth, "MMMM yyyy");
+      header.style.fontSize = '24px';
+      header.style.fontWeight = 'bold';
+      header.style.marginBottom = '16px';
+      header.style.color = '#1ea69a';
+      header.style.textAlign = 'center';
+      
+      // Clone the calendar element
+      const calendarClone = calendarRef.current.cloneNode(true) as HTMLElement;
+      
+      // Fix: Use a safer way to select elements without complex CSS selectors
+      // Ensure all event texts are fully visible
+      const eventTexts = calendarClone.querySelectorAll('[class*="truncate"]');
+      eventTexts.forEach(el => {
+        (el as HTMLElement).classList.remove('truncate');
+        (el as HTMLElement).style.whiteSpace = 'normal';
+        (el as HTMLElement).style.wordBreak = 'break-word';
       });
+      
+      // Make sure all events are visible by expanding the day cells
+      const dayCells = calendarClone.querySelectorAll('[class*="h-28"]');
+      dayCells.forEach(cell => {
+        (cell as HTMLElement).style.height = 'auto';
+        (cell as HTMLElement).style.minHeight = '7rem'; // Keep minimum height
+      });
+      
+      // Fix: Use a safer selector for max-height elements
+      const eventContainers = calendarClone.querySelectorAll('[class*="overflow-auto"]');
+      eventContainers.forEach(container => {
+        (container as HTMLElement).style.maxHeight = 'none';
+        (container as HTMLElement).style.overflow = 'visible';
+      });
+      
+      // Append elements to the temporary container
+      tempContainer.appendChild(header);
+      tempContainer.appendChild(calendarClone);
+      
+      // Temporarily add to document to render it
+      document.body.appendChild(tempContainer);
+      
+      const dataUrl = await htmlToImage.toPng(tempContainer, {
+        quality: 1.0,
+        backgroundColor: '#fff',
+        width: tempContainer.offsetWidth,
+        height: tempContainer.offsetHeight
+      });
+      
+      // Remove the temporary container
+      document.body.removeChild(tempContainer);
       
       const link = document.createElement('a');
       link.download = `calendar-${format(currentMonth, 'MMMM-yyyy')}.png`;
